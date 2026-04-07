@@ -229,8 +229,7 @@
 </main>
 
 <script>
-const GC    = 'https://city-quiz.goatcounter.com';
-const TOKEN = 'dnvky82gxuv6hhrowg1n01wizw341h2d5u90b14e2szb3c1d';
+const GC = 'https://city-quiz.goatcounter.com';
 
 const CITIES = {
   ВЕЛ: { name: 'Велигама',      flag: '🇱🇰' },
@@ -258,39 +257,28 @@ async function fetchCounter(path) {
   try {
     const res = await fetch(`${GC}/counter/${encoded}.json`);
     if (!res.ok) return 0;
-    return parseInt((await res.json()).count, 10) || 0;
+    const data = await res.json();
+    return parseInt(data.count, 10) || 0;
   } catch { return 0; }
 }
 
 async function loadStats() {
   const cityKeys = Object.keys(CITIES);
-  const today = new Date().toISOString().split('T')[0];
 
-  // Page views via API (raw hit counts matching dashboard)
-  let opened = 0;
-  try {
-    const res = await fetch(
-      `${GC}/api/v0/stats/hits?start=2020-01-01&end=${today}&limit=300`,
-      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
-    );
-    if (res.ok) {
-      const { hits } = await res.json();
-      (hits || []).forEach(h => {
-        const p = h.path;
-        if (p === '/city-quiz' || p === '/city-quiz/' || p === '/city-quiz/index.html') {
-          opened += h.count || 0;
-        }
-      });
-    }
-  } catch (e) { console.warn('API error:', e); }
+  // All counters in one parallel batch — no auth headers, no CORS preflight
+  const paths = [
+    '/city-quiz',
+    '/city-quiz/',
+    '/city-quiz/index.html',
+    'quiz_start',
+    ...cityKeys.map(k => `result/${k}`)
+  ];
+  const counts = await Promise.all(paths.map(fetchCounter));
 
-  // Events via counter endpoint (events are not in the hits API)
-  const eventPaths = ['quiz_start', ...cityKeys.map(k => `result/${k}`)];
-  const counts = await Promise.all(eventPaths.map(fetchCounter));
-
-  const starts = counts[0];
+  const opened = counts[0] + counts[1] + counts[2];
+  const starts  = counts[3];
   const results = {};
-  cityKeys.forEach((key, i) => { if (counts[i + 1] > 0) results[key] = counts[i + 1]; });
+  cityKeys.forEach((key, i) => { if (counts[4 + i] > 0) results[key] = counts[4 + i]; });
 
   return { opened, starts, results };
 }
