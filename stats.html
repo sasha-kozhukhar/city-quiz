@@ -499,25 +499,32 @@ async function loadChartData(range) {
   const doneByDay  = {};
 
   // 1. Historical data via GoatCounter API (daily=true)
-  try {
-    const res = await fetch(
-      `${GC}/api/v0/stats/hits?start=${apiStart}&end=${end}&daily=true&limit=300`,
-      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
-    );
-    if (res.ok) {
-      const { hits } = await res.json();
+  //    Try without auth first (works if public stats enabled, avoids CORS preflight)
+  //    then retry with Bearer token as fallback
+  const apiUrl = `${GC}/api/v0/stats/hits?start=${apiStart}&end=${end}&daily=true&limit=300`;
+  for (const opts of [{}, { headers: { 'Authorization': `Bearer ${TOKEN}` } }]) {
+    try {
+      const res = await fetch(apiUrl, opts);
+      console.log('Chart API', opts.headers ? '(auth)' : '(no auth)', res.status, res.headers.get('content-type'));
+      if (!res.ok) continue;
+      const body = await res.json();
+      console.log('Chart API hits:', body.hits?.length, 'first:', JSON.stringify(body.hits?.[0])?.slice(0, 120));
+      const { hits } = body;
+      let found = false;
       (hits || []).forEach(h => {
         const p = h.path;
         const isOpen = p === '/city-quiz' || p === '/city-quiz/' || p === '/city-quiz/index.html';
         const isDone  = p.startsWith('result/');
         if (!isOpen && !isDone) return;
+        found = true;
         (h.stats || []).forEach(s => {
           if (isOpen) opensByDay[s.day] = (opensByDay[s.day] || 0) + (s.count || 0);
           if (isDone)  doneByDay[s.day]  = (doneByDay[s.day]  || 0) + (s.count || 0);
         });
       });
-    }
-  } catch (e) { console.warn('Chart API:', e); }
+      if (found) break; // got useful data, stop retrying
+    } catch (e) { console.warn('Chart API error:', e.message); }
+  }
 
   // 2. Per-day counters supplement/override recent data (reliable, works going forward)
   const recentDays = fillDays(counterStart, end);
