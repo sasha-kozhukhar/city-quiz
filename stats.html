@@ -90,6 +90,30 @@
 
     .summary-value.accent { color: var(--accent); }
 
+    /* ── Live indicator ── */
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4caf50;
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
     /* ── Chart ── */
 
     .section-title {
@@ -191,7 +215,10 @@
 
 <header>
   <h1>🗺️ Статистика квиза</h1>
-  <a href="index.html">← Квиз</a>
+  <div style="display:flex;align-items:center;gap:20px;">
+    <div class="live-badge"><div class="live-dot"></div><span id="last-updated">загружаем…</span></div>
+    <a href="index.html">← Квиз</a>
+  </div>
 </header>
 
 <main id="main">
@@ -273,36 +300,59 @@ async function loadStats() {
   return { opened, starts, results };
 }
 
-function render({ opened, starts, results }) {
+const REFRESH_INTERVAL = 30; // seconds
+let refreshTimer = null;
+let countdownTimer = null;
+let secondsLeft = REFRESH_INTERVAL;
+
+function updateCountdown() {
+  const el = document.getElementById('last-updated');
+  if (!el) return;
+  if (secondsLeft <= 0) {
+    el.textContent = 'обновляем…';
+  } else {
+    el.textContent = `обновлено только что · следующее через ${secondsLeft} с`;
+  }
+}
+
+function startCountdown() {
+  clearInterval(countdownTimer);
+  secondsLeft = REFRESH_INTERVAL;
+  updateCountdown();
+  countdownTimer = setInterval(() => {
+    secondsLeft--;
+    updateCountdown();
+    if (secondsLeft <= 0) clearInterval(countdownTimer);
+  }, 1000);
+}
+
+function renderInitial({ opened, starts, results }) {
   const main = document.getElementById('main');
 
   const completions = Object.values(results).reduce((a, b) => a + b, 0);
   const base = Math.max(opened, starts, completions, 1);
   const rate = Math.round((completions / base) * 100);
 
-  const sorted = Object.entries(results)
-    .sort((a, b) => b[1] - a[1]);
-
+  const sorted = Object.entries(results).sort((a, b) => b[1] - a[1]);
   const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
 
-  // Build HTML
   main.innerHTML = `
     <div class="summary">
       <div class="summary-card">
         <div class="summary-label">Открыли квиз</div>
-        <div class="summary-value">${opened}</div>
+        <div class="summary-value" id="val-opened">${opened}</div>
       </div>
       <div class="summary-card">
         <div class="summary-label">Нажали «Начать»</div>
-        <div class="summary-value">${starts}</div>
+        <div class="summary-value" id="val-starts">${starts}</div>
       </div>
       <div class="summary-card">
         <div class="summary-label">Прошли до конца</div>
-        <div class="summary-value">${completions}</div>
+        <div class="summary-value" id="val-completions">${completions}</div>
       </div>
       <div class="summary-card">
         <div class="summary-label">Конверсия (открыли → прошли)</div>
-        <div class="summary-value accent">${rate}%</div>
+        <div class="summary-value accent" id="val-rate">${rate}%</div>
       </div>
     </div>
 
@@ -320,9 +370,9 @@ function render({ opened, starts, results }) {
   sorted.forEach(([code, count]) => {
     const city = CITIES[code] || { name: code, flag: '🌍' };
     const pct = Math.round((count / maxCount) * 100);
-
     const row = document.createElement('div');
     row.className = 'chart-row';
+    row.dataset.code = code;
     row.innerHTML = `
       <div class="chart-city">${city.flag} ${city.name}</div>
       <div class="chart-bar-wrap"><div class="chart-bar" data-pct="${pct}"></div></div>
@@ -331,7 +381,6 @@ function render({ opened, starts, results }) {
     chart.appendChild(row);
   });
 
-  // Animate bars after paint
   requestAnimationFrame(() => {
     document.querySelectorAll('.chart-bar').forEach(bar => {
       bar.style.width = bar.dataset.pct + '%';
@@ -339,18 +388,86 @@ function render({ opened, starts, results }) {
   });
 }
 
-loadStats()
-  .then(data => {
-    render(data);
-    if (navigator.userAgent.includes('Windows') && window.twemoji) {
-      twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
-    }
-  })
-  .catch(err => {
-    document.getElementById('main').innerHTML = `
-      <div class="state">Не удалось загрузить данные.<br>${err.message}</div>
-    `;
-  });
+function renderUpdate({ opened, starts, results }) {
+  const completions = Object.values(results).reduce((a, b) => a + b, 0);
+  const base = Math.max(opened, starts, completions, 1);
+  const rate = Math.round((completions / base) * 100);
+
+  // Update summary numbers
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('val-opened', opened);
+  set('val-starts', starts);
+  set('val-completions', completions);
+  set('val-rate', rate + '%');
+
+  // Update chart
+  const sorted = Object.entries(results).sort((a, b) => b[1] - a[1]);
+  const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
+  const chart = document.getElementById('chart');
+  if (!chart) return;
+
+  // Check if city order changed — if so, re-render chart from scratch
+  const existingCodes = [...chart.querySelectorAll('.chart-row')].map(r => r.dataset.code);
+  const newCodes = sorted.map(([code]) => code);
+  const orderChanged = JSON.stringify(existingCodes) !== JSON.stringify(newCodes);
+
+  if (orderChanged) {
+    chart.innerHTML = '';
+    sorted.forEach(([code, count]) => {
+      const city = CITIES[code] || { name: code, flag: '🌍' };
+      const pct = Math.round((count / maxCount) * 100);
+      const row = document.createElement('div');
+      row.className = 'chart-row';
+      row.dataset.code = code;
+      row.innerHTML = `
+        <div class="chart-city">${city.flag} ${city.name}</div>
+        <div class="chart-bar-wrap"><div class="chart-bar" style="width:${pct}%"></div></div>
+        <div class="chart-count">${count}</div>
+      `;
+      chart.appendChild(row);
+    });
+  } else {
+    // Just update numbers and bar widths in place
+    chart.querySelectorAll('.chart-row').forEach(row => {
+      const code = row.dataset.code;
+      const count = results[code] || 0;
+      const pct = Math.round((count / maxCount) * 100);
+      row.querySelector('.chart-count').textContent = count;
+      row.querySelector('.chart-bar').style.width = pct + '%';
+    });
+  }
+}
+
+let firstLoad = true;
+
+function refresh() {
+  document.getElementById('last-updated').textContent = 'обновляем…';
+  loadStats()
+    .then(data => {
+      if (firstLoad) {
+        renderInitial(data);
+        firstLoad = false;
+        if (navigator.userAgent.includes('Windows') && window.twemoji) {
+          twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+        }
+      } else {
+        renderUpdate(data);
+      }
+      startCountdown();
+    })
+    .catch(err => {
+      if (firstLoad) {
+        document.getElementById('main').innerHTML = `
+          <div class="state">Не удалось загрузить данные.<br>${err.message}</div>
+        `;
+      }
+      // On update failure — silently retry next cycle
+      startCountdown();
+    });
+}
+
+refresh();
+refreshTimer = setInterval(refresh, REFRESH_INTERVAL * 1000);
 </script>
 
 </body>
