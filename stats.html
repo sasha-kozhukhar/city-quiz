@@ -10,13 +10,23 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg: #f8f7f4;
+      --card: #fff;
+      --accent: #c4621a;
+      --accent-light: #f5e8de;
+      --border: #e8e6e1;
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --radius: 12px;
+    }
+
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: #f8f7f4;
-      color: #1a1a1a;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      padding: 0 0 80px;
     }
 
     header {
@@ -24,104 +34,285 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #e8e6e1;
-      background: #fff;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    header h1 {
-      font-size: 18px;
-      font-weight: 600;
-    }
+    header h1 { font-size: 18px; font-weight: 600; }
 
     header a {
       font-size: 14px;
-      color: #c4621a;
+      color: var(--accent);
       text-decoration: none;
       font-weight: 500;
     }
-
     header a:hover { text-decoration: underline; }
 
-    .frame-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 0;
     }
 
-    iframe {
-      flex: 1;
-      width: 100%;
-      border: none;
-      min-height: calc(100vh - 73px);
-    }
+    /* ── Summary cards ── */
 
-    .fallback {
-      display: none;
-      flex: 1;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
-      padding: 48px 24px;
-      text-align: center;
+      margin-bottom: 40px;
     }
 
-    .fallback p {
-      color: #6b6b6b;
-      font-size: 15px;
+    .summary-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px 20px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
-    .fallback a {
-      display: inline-block;
-      background: #c4621a;
-      color: #fff;
-      border-radius: 50px;
-      padding: 14px 32px;
-      font-size: 15px;
+    .summary-label {
+      font-size: 13px;
+      color: var(--muted);
       font-weight: 500;
-      text-decoration: none;
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .summary-value.accent { color: var(--accent); }
+
+    /* ── Chart ── */
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .chart {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 8px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 40px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 160px 1fr 44px;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 20px;
+    }
+
+    .chart-row:not(:last-child) {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-city {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chart-bar-wrap {
+      height: 8px;
+      background: var(--accent-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .chart-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+      transition: width 0.6s ease;
+      width: 0%;
+    }
+
+    .chart-count {
+      font-size: 14px;
+      font-weight: 600;
+      text-align: right;
+      color: var(--text);
+    }
+
+    /* ── Loading / error ── */
+
+    .state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      header { padding: 16px; }
+      main { padding: 24px 16px 0; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      .summary-card:last-child { grid-column: 1 / -1; }
+      .chart-row { grid-template-columns: 130px 1fr 36px; padding: 8px 14px; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🗺️ Статистика квиза</h1>
-    <a href="index.html">← Квиз</a>
-  </header>
 
-  <div class="frame-wrap">
-    <iframe
-      id="gc-frame"
-      src="https://city-quiz.goatcounter.com"
-      title="GoatCounter stats"
-      onload="handleLoad()"
-      onerror="handleError()"
-    ></iframe>
+<header>
+  <h1>🗺️ Статистика квиза</h1>
+  <a href="index.html">← Квиз</a>
+</header>
 
-    <div class="fallback" id="fallback">
-      <p>Не удалось загрузить статистику в iframe.<br>Открой дашборд напрямую:</p>
-      <a href="https://city-quiz.goatcounter.com" target="_blank" rel="noopener">Открыть статистику</a>
-    </div>
+<main id="main">
+  <div class="state" id="loading">
+    <div class="spinner"></div>
+    Загружаем данные…
   </div>
+</main>
 
-  <script>
-    function handleError() {
-      document.getElementById('gc-frame').style.display = 'none';
-      document.getElementById('fallback').style.display = 'flex';
+<script>
+const TOKEN = 'dnvky82gxuv6hhrowg1n01wizw341h2d5u90b14e2szb3c1d';
+const API   = 'https://city-quiz.goatcounter.com/api/v0';
+
+const CITIES = {
+  ВЕЛ: { name: 'Велигама',      flag: '🇱🇰' },
+  СТА: { name: 'Стамбул',       flag: '🇹🇷' },
+  ТБЛ: { name: 'Тбилиси',       flag: '🇬🇪' },
+  БАТ: { name: 'Батуми',        flag: '🇬🇪' },
+  ЕРВ: { name: 'Ереван',        flag: '🇦🇲' },
+  МСК: { name: 'Москва',        flag: '🇷🇺' },
+  БДВ: { name: 'Будва',         flag: '🇲🇪' },
+  БЛГ: { name: 'Белград',       flag: '🇷🇸' },
+  БШК: { name: 'Бишкек',        flag: '🇰🇬' },
+  МДР: { name: 'Мадрид',        flag: '🇪🇸' },
+  АГД: { name: 'Агадир',        flag: '🇲🇦' },
+  БРЛ: { name: 'Берлин',        flag: '🇩🇪' },
+  ЛДН: { name: 'Лондон',        flag: '🇬🇧' },
+  КПТ: { name: 'Кейптаун',      flag: '🇿🇦' },
+  ВНА: { name: 'Вена',          flag: '🇦🇹' },
+  ЕГР: { name: 'Слонёнок Егор', flag: '🧸'  },
+};
+
+async function loadStats() {
+  const today = new Date().toISOString().split('T')[0];
+  const url = `${API}/stats/hits?limit=300&start=2020-01-01&end=${today}`;
+
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${TOKEN}` }
+  });
+
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const data = await res.json();
+  return data.hits || [];
+}
+
+function render(hits) {
+  const main = document.getElementById('main');
+
+  // Count events
+  let starts = 0;
+  const results = {};
+
+  hits.forEach(h => {
+    if (h.path === 'quiz_start') {
+      starts = h.count;
+    } else if (h.path.startsWith('result/')) {
+      const code = h.path.replace('result/', '');
+      results[code] = (results[code] || 0) + h.count;
     }
+  });
 
-    // If iframe loads but shows an error page (e.g. X-Frame-Options), show fallback
-    document.getElementById('gc-frame').addEventListener('load', function () {
-      try {
-        // If cross-origin restriction applies, accessing contentDocument throws
-        const doc = this.contentDocument;
-        if (!doc || doc.title === '' || doc.body.innerHTML === '') {
-          handleError();
-        }
-      } catch (e) {
-        handleError();
-      }
+  const completions = Object.values(results).reduce((a, b) => a + b, 0);
+  const rate = starts > 0 ? Math.round((completions / starts) * 100) : 0;
+
+  // Sort cities by count
+  const sorted = Object.entries(results)
+    .sort((a, b) => b[1] - a[1]);
+
+  const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
+
+  // Build HTML
+  main.innerHTML = `
+    <div class="summary">
+      <div class="summary-card">
+        <div class="summary-label">Запустили квиз</div>
+        <div class="summary-value">${starts}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Прошли до конца</div>
+        <div class="summary-value">${completions}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Конверсия</div>
+        <div class="summary-value accent">${rate}%</div>
+      </div>
+    </div>
+
+    <div class="section-title">Результаты по городам</div>
+    <div class="chart" id="chart"></div>
+  `;
+
+  const chart = document.getElementById('chart');
+
+  if (sorted.length === 0) {
+    chart.innerHTML = '<div class="state">Данных пока нет</div>';
+    return;
+  }
+
+  sorted.forEach(([code, count]) => {
+    const city = CITIES[code] || { name: code, flag: '🌍' };
+    const pct = Math.round((count / maxCount) * 100);
+
+    const row = document.createElement('div');
+    row.className = 'chart-row';
+    row.innerHTML = `
+      <div class="chart-city">${city.flag} ${city.name}</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" data-pct="${pct}"></div></div>
+      <div class="chart-count">${count}</div>
+    `;
+    chart.appendChild(row);
+  });
+
+  // Animate bars after paint
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.chart-bar').forEach(bar => {
+      bar.style.width = bar.dataset.pct + '%';
     });
-  </script>
+  });
+}
+
+loadStats()
+  .then(render)
+  .catch(err => {
+    document.getElementById('main').innerHTML = `
+      <div class="state">Не удалось загрузить данные.<br>${err.message}</div>
+    `;
+  });
+</script>
+
 </body>
 </html>
