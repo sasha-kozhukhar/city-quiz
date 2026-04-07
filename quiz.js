@@ -193,9 +193,16 @@ function showScreen(from, to) {
 
 // ─── Quiz logic ───────────────────────────────────────
 
+function track(path, title) {
+  if (window.goatcounter && window.goatcounter.count) {
+    window.goatcounter.count({ path, title, event: true });
+  }
+}
+
 function startQuiz() {
   initScores();
   currentQuestion = 0;
+  track('quiz_start', 'Quiz Started');
   showScreen(screenIntro, screenQuiz);
   renderQuestion();
 }
@@ -263,6 +270,8 @@ function showResult() {
 
   resultCityName.textContent = `${city.flag} ${city.name}`;
   resultDescription.textContent = DESCRIPTIONS[winner];
+
+  track('result/' + winner, 'Result: ' + city.name);
 
   showScreen(screenQuiz, screenResult);
 }
