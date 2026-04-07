@@ -224,28 +224,6 @@ const CITIES = {
   ЕГР: { name: 'Слонёнок Егор', flag: '🧸'  },
 };
 
-// ── API (accurate total hits) ──────────────────────────
-async function loadFromAPI() {
-  const today = new Date().toISOString().split('T')[0];
-  const res = await fetch(
-    `${GC}/api/v0/stats/hits?start=2020-01-01&end=${today}&limit=200`,
-    { headers: { 'Authorization': `Bearer ${TOKEN}` } }
-  );
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const { hits } = await res.json();
-  if (!hits || hits.length === 0) throw new Error('empty');
-
-  let opened = 0, starts = 0;
-  const results = {};
-  hits.forEach(h => {
-    if (h.path === '/city-quiz' || h.path === '/city-quiz/index.html') opened += h.count;
-    else if (h.path === 'quiz_start') starts = h.count;
-    else if (h.path.startsWith('result/')) results[h.path.replace('result/', '')] = h.count;
-  });
-  return { opened, starts, results };
-}
-
-// ── Counter endpoint fallback (session-deduplicated) ───
 async function fetchCounter(path) {
   const encoded = path.startsWith('/')
     ? encodeURIComponent(path)
@@ -257,25 +235,42 @@ async function fetchCounter(path) {
   } catch { return 0; }
 }
 
-async function loadFromCounter() {
-  const cityKeys = Object.keys(CITIES);
-  const paths = ['/city-quiz', '/city-quiz/index.html', 'quiz_start',
-                 ...cityKeys.map(k => `result/${k}`)];
-  const counts = await Promise.all(paths.map(fetchCounter));
-  const opened = counts[0] + counts[1];
-  const starts = counts[2];
-  const results = {};
-  cityKeys.forEach((key, i) => { if (counts[i + 3] > 0) results[key] = counts[i + 3]; });
-  return { opened, starts, results };
-}
-
 async function loadStats() {
+  const cityKeys = Object.keys(CITIES);
+
+  // Page views: API gives accurate total hits (not deduplicated)
+  let opened = 0;
   try {
-    return await loadFromAPI();
-  } catch (e) {
-    console.warn('API unavailable, using counter endpoint:', e.message);
-    return await loadFromCounter();
+    const today = new Date().toISOString().split('T')[0];
+    const res = await fetch(
+      `${GC}/api/v0/stats/hits?start=2020-01-01&end=${today}&limit=200`,
+      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+    );
+    if (res.ok) {
+      const { hits } = await res.json();
+      (hits || []).forEach(h => {
+        if (h.path === '/city-quiz' || h.path === '/city-quiz/index.html') opened += h.count;
+      });
+    }
+  } catch (e) { console.warn('API error:', e.message); }
+
+  // Events: counter endpoint (always fresh)
+  const eventPaths = ['quiz_start', ...cityKeys.map(k => `result/${k}`)];
+  const counts = await Promise.all(eventPaths.map(fetchCounter));
+
+  const starts = counts[0];
+  const results = {};
+  cityKeys.forEach((key, i) => { if (counts[i + 1] > 0) results[key] = counts[i + 1]; });
+
+  // Fallback for opened if API returned 0
+  if (opened === 0) {
+    const [c1, c2] = await Promise.all([
+      fetchCounter('/city-quiz'), fetchCounter('/city-quiz/index.html')
+    ]);
+    opened = c1 + c2;
   }
+
+  return { opened, starts, results };
 }
 
 function render({ opened, starts, results }) {
