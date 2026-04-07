@@ -202,8 +202,21 @@ function applyEmoji(el) {
 }
 
 function track(path, title) {
-  if (window.goatcounter && window.goatcounter.count) {
+  // Primary: GoatCounter JS (full metadata)
+  if (window.goatcounter?.count) {
     window.goatcounter.count({ path, title, event: true });
+    return;
+  }
+  // Fallback: direct request to count endpoint.
+  // Helps when gc.zgo.at CDN script is blocked but the custom domain isn't.
+  const url = 'https://city-quiz.goatcounter.com/count'
+    + '?p=' + encodeURIComponent(path)
+    + '&t=' + encodeURIComponent(title)
+    + '&e=1';
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(url);
+  } else {
+    new Image().src = url;
   }
 }
 
