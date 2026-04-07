@@ -220,10 +220,16 @@ function track(path, title) {
   }
 }
 
+function todayDate() {
+  return new Date().toISOString().split('T')[0];
+}
+
 function startQuiz() {
   initScores();
   currentQuestion = 0;
-  track('quiz_start', 'Quiz Started');
+  const d = todayDate();
+  track('quiz_start',  'Quiz Started');
+  track('open/' + d,   'Daily Open');
   showScreen(screenIntro, screenQuiz);
   renderQuestion();
 }
@@ -302,7 +308,9 @@ function showResult() {
   resultCityName.textContent = `${city.flag} ${city.name}`;
   resultDescription.textContent = DESCRIPTIONS[winner];
 
+  const d = todayDate();
   track('result/' + winner, 'Result: ' + city.name);
+  track('done/' + d,        'Daily Done');
 
   showScreen(screenQuiz, screenResult);
   applyEmoji(screenResult);

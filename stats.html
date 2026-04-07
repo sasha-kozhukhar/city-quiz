@@ -265,8 +265,7 @@
 </main>
 
 <script>
-const GC    = 'https://city-quiz.goatcounter.com';
-const TOKEN = 'dnvky82gxuv6hhrowg1n01wizw341h2d5u90b14e2szb3c1d';
+const GC = 'https://city-quiz.goatcounter.com';
 
 const CITIES = {
   ВЕЛ: { name: 'Велигама',      flag: '🇱🇰' },
@@ -490,39 +489,19 @@ function fmtDay(iso) {
 
 async function loadChartData(range) {
   const end   = todayISO();
-  const start = range === 'all' ? '2020-01-01' : daysAgoISO(range - 1);
+  const start = range === 'all' ? '2024-01-01' : daysAgoISO(range - 1);
+  const days  = fillDays(start, end);
 
-  try {
-    const res = await fetch(
-      `${GC}/api/v0/stats/hits?start=${start}&end=${end}&daily=true&limit=300`,
-      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
-    );
-    if (!res.ok) return null;
-    const { hits } = await res.json();
+  // Fetch open/DATE and done/DATE counters in parallel
+  const openPaths = days.map(d => `open/${d}`);
+  const donePaths = days.map(d => `done/${d}`);
+  const counts = await Promise.all([...openPaths, ...donePaths].map(fetchCounter));
 
-    const days = fillDays(range === 'all' && hits?.length ? hits[0].stats?.[0]?.day || start : start, end);
-    const opensByDay = {}, completionsByDay = {};
-
-    (hits || []).forEach(h => {
-      const p = h.path;
-      const isOpen = p === '/city-quiz' || p === '/city-quiz/' || p === '/city-quiz/index.html';
-      const isDone  = p.startsWith('result/');
-      if (!isOpen && !isDone) return;
-      (h.stats || []).forEach(s => {
-        if (isOpen) opensByDay[s.day] = (opensByDay[s.day] || 0) + (s.count || 0);
-        if (isDone)  completionsByDay[s.day] = (completionsByDay[s.day] || 0) + (s.count || 0);
-      });
-    });
-
-    return {
-      labels:      days.map(fmtDay),
-      opens:       days.map(d => opensByDay[d] || 0),
-      completions: days.map(d => completionsByDay[d] || 0),
-    };
-  } catch (e) {
-    console.warn('Chart API error:', e);
-    return null;
-  }
+  return {
+    labels:      days.map(fmtDay),
+    opens:       counts.slice(0, days.length),
+    completions: counts.slice(days.length),
+  };
 }
 
 function renderTimeline(data) {
