@@ -172,6 +172,13 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    img.emoji {
+      height: 1.2em;
+      width: 1.2em;
+      vertical-align: -0.2em;
+      display: inline;
+    }
+
     @media (max-width: 480px) {
       header { padding: 16px; }
       main { padding: 24px 16px 0; }
@@ -223,7 +230,7 @@ async function fetchCount(path) {
     const res = await fetch(`${GC}/counter/${encoded}.json`);
     if (!res.ok) return 0;
     const data = await res.json();
-    return data.count || 0;
+    return parseInt(data.count, 10) || 0;
   } catch {
     return 0;
   }
@@ -304,7 +311,12 @@ function render({ starts, results }) {
 }
 
 loadStats()
-  .then(data => { render(data); if (window.twemoji) twemoji.parse(document.body, { folder: 'svg', ext: '.svg' }); })
+  .then(data => {
+    render(data);
+    if (navigator.userAgent.includes('Windows') && window.twemoji) {
+      twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+    }
+  })
   .catch(err => {
     document.getElementById('main').innerHTML = `
       <div class="state">Не удалось загрузить данные.<br>${err.message}</div>

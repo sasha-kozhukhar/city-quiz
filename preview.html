@@ -111,6 +111,13 @@
       line-height: 1.2;
     }
 
+    img.emoji {
+      height: 1.2em;
+      width: 1.2em;
+      vertical-align: -0.2em;
+      display: inline;
+    }
+
     .card-desc {
       font-size: 14px;
       line-height: 1.65;
@@ -204,7 +211,9 @@
       grid.appendChild(card);
     });
 
-    if (window.twemoji) twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+    if (navigator.userAgent.includes('Windows') && window.twemoji) {
+      twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+    }
   </script>
 </body>
 </html>

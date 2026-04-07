@@ -193,8 +193,10 @@ function showScreen(from, to) {
 
 // ─── Quiz logic ───────────────────────────────────────
 
+const needsTwemoji = navigator.userAgent.includes('Windows');
+
 function applyEmoji(el) {
-  if (window.twemoji) {
+  if (needsTwemoji && window.twemoji) {
     twemoji.parse(el || document.body, { folder: 'svg', ext: '.svg' });
   }
 }

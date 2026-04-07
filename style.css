@@ -330,6 +330,15 @@ h1 {
   }
 }
 
+/* ─── Twemoji ─────────────────────────────────────── */
+
+img.emoji {
+  height: 1.2em;
+  width: 1.2em;
+  vertical-align: -0.2em;
+  display: inline;
+}
+
 /* ─── Transition ──────────────────────────────────── */
 
 .screen-fade-out {
