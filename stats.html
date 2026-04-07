@@ -277,7 +277,8 @@ function render({ opened, starts, results }) {
   const main = document.getElementById('main');
 
   const completions = Object.values(results).reduce((a, b) => a + b, 0);
-  const rate = opened > 0 ? Math.round((completions / opened) * 100) : 0;
+  const base = Math.max(opened, starts, completions, 1);
+  const rate = Math.round((completions / base) * 100);
 
   const sorted = Object.entries(results)
     .sort((a, b) => b[1] - a[1]);
