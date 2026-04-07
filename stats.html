@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -203,10 +204,45 @@
       display: inline;
     }
 
+    /* ── Timeline chart ── */
+
+    .timeline-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px 20px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 40px;
+    }
+
+    .timeline-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .timeline-tab {
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .timeline-tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
     @media (max-width: 600px) {
       header { padding: 16px; }
       main { padding: 24px 16px 0; }
-      .summary { grid-template-columns: 1fr 1fr 1fr; }
+      .summary { grid-template-columns: 1fr 1fr; }
       .chart-row { grid-template-columns: 130px 1fr 36px; padding: 8px 14px; }
     }
   </style>
@@ -229,7 +265,8 @@
 </main>
 
 <script>
-const GC = 'https://city-quiz.goatcounter.com';
+const GC    = 'https://city-quiz.goatcounter.com';
+const TOKEN = 'dnvky82gxuv6hhrowg1n01wizw341h2d5u90b14e2szb3c1d';
 
 const CITIES = {
   ВЕЛ: { name: 'Велигама',      flag: '🇱🇰' },
@@ -331,6 +368,17 @@ function renderInitial({ opened, results }) {
       </div>
     </div>
 
+    <div class="section-title" style="margin-bottom:16px;margin-top:40px;">График активности</div>
+    <div class="timeline-card">
+      <div class="timeline-tabs">
+        <button class="timeline-tab active" data-range="30">30 дней</button>
+        <button class="timeline-tab" data-range="7">7 дней</button>
+        <button class="timeline-tab" data-range="all">Всё время</button>
+      </div>
+      <canvas id="timeline-canvas"></canvas>
+      <div id="timeline-state" style="text-align:center;padding:32px;color:var(--muted);font-size:14px;display:none;"></div>
+    </div>
+
     <div class="section-title">Результаты по городам</div>
     <div class="chart" id="chart"></div>
   `;
@@ -412,6 +460,193 @@ function renderUpdate({ opened, results }) {
   }
 }
 
+// ── Timeline chart ────────────────────────────────────
+
+let timelineChart = null;
+let currentRange = 30;
+
+function daysAgoISO(n) {
+  const d = new Date(Date.now() - n * 86400000);
+  return d.toISOString().split('T')[0];
+}
+
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function fillDays(start, end) {
+  const days = [];
+  for (let d = new Date(start + 'T00:00:00'); d <= new Date(end + 'T00:00:00'); d.setDate(d.getDate() + 1)) {
+    days.push(d.toISOString().split('T')[0]);
+  }
+  return days;
+}
+
+function fmtDay(iso) {
+  const [, m, dd] = iso.split('-');
+  const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  return `${parseInt(dd)} ${months[parseInt(m) - 1]}`;
+}
+
+async function loadChartData(range) {
+  const end   = todayISO();
+  const start = range === 'all' ? '2020-01-01' : daysAgoISO(range - 1);
+
+  try {
+    const res = await fetch(
+      `${GC}/api/v0/stats/hits?start=${start}&end=${end}&daily=true&limit=300`,
+      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+    );
+    if (!res.ok) return null;
+    const { hits } = await res.json();
+
+    const days = fillDays(range === 'all' && hits?.length ? hits[0].stats?.[0]?.day || start : start, end);
+    const opensByDay = {}, completionsByDay = {};
+
+    (hits || []).forEach(h => {
+      const p = h.path;
+      const isOpen = p === '/city-quiz' || p === '/city-quiz/' || p === '/city-quiz/index.html';
+      const isDone  = p.startsWith('result/');
+      if (!isOpen && !isDone) return;
+      (h.stats || []).forEach(s => {
+        if (isOpen) opensByDay[s.day] = (opensByDay[s.day] || 0) + (s.count || 0);
+        if (isDone)  completionsByDay[s.day] = (completionsByDay[s.day] || 0) + (s.count || 0);
+      });
+    });
+
+    return {
+      labels:      days.map(fmtDay),
+      opens:       days.map(d => opensByDay[d] || 0),
+      completions: days.map(d => completionsByDay[d] || 0),
+    };
+  } catch (e) {
+    console.warn('Chart API error:', e);
+    return null;
+  }
+}
+
+function renderTimeline(data) {
+  const canvas = document.getElementById('timeline-canvas');
+  const stateEl = document.getElementById('timeline-state');
+  if (!canvas) return;
+
+  if (!data) {
+    canvas.style.display = 'none';
+    stateEl.style.display = 'block';
+    stateEl.textContent = 'Не удалось загрузить данные графика';
+    return;
+  }
+
+  const hasAny = data.opens.some(v => v > 0) || data.completions.some(v => v > 0);
+  if (!hasAny) {
+    canvas.style.display = 'none';
+    stateEl.style.display = 'block';
+    stateEl.textContent = 'Данных за этот период нет';
+    return;
+  }
+
+  canvas.style.display = 'block';
+  stateEl.style.display = 'none';
+
+  if (timelineChart) {
+    timelineChart.data.labels = data.labels;
+    timelineChart.data.datasets[0].data = data.opens;
+    timelineChart.data.datasets[1].data = data.completions;
+    timelineChart.update('none');
+    return;
+  }
+
+  timelineChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: 'Открыли',
+          data: data.opens,
+          borderColor: '#c4621a',
+          backgroundColor: 'rgba(196,98,26,0.07)',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#c4621a',
+          tension: 0.35,
+          fill: true,
+        },
+        {
+          label: 'Прошли до конца',
+          data: data.completions,
+          borderColor: '#3a7d6e',
+          backgroundColor: 'rgba(58,125,110,0.07)',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#3a7d6e',
+          tension: 0.35,
+          fill: true,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            font: { family: "'Inter', system-ui, sans-serif", size: 13 },
+            boxWidth: 12,
+            padding: 16,
+            color: '#1a1a1a',
+          },
+        },
+        tooltip: {
+          backgroundColor: '#fff',
+          borderColor: '#e8e6e1',
+          borderWidth: 1,
+          titleColor: '#1a1a1a',
+          bodyColor: '#6b6b6b',
+          padding: 12,
+          boxPadding: 4,
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: '#f0ede8' },
+          ticks: {
+            font: { family: "'Inter', system-ui, sans-serif", size: 11 },
+            color: '#6b6b6b',
+            maxTicksLimit: 12,
+            maxRotation: 0,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f0ede8' },
+          ticks: {
+            font: { family: "'Inter', system-ui, sans-serif", size: 11 },
+            color: '#6b6b6b',
+            stepSize: 1,
+            precision: 0,
+          },
+        },
+      },
+    },
+  });
+}
+
+function initTimelineTabs() {
+  document.addEventListener('click', e => {
+    const tab = e.target.closest('.timeline-tab');
+    if (!tab) return;
+    document.querySelectorAll('.timeline-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentRange = tab.dataset.range === 'all' ? 'all' : parseInt(tab.dataset.range);
+    loadChartData(currentRange).then(renderTimeline);
+  });
+}
+
 let firstLoad = true;
 
 function refresh() {
@@ -420,6 +655,7 @@ function refresh() {
     .then(data => {
       if (firstLoad) {
         renderInitial(data);
+        initTimelineTabs();
         firstLoad = false;
         if (navigator.userAgent.includes('Windows') && window.twemoji) {
           twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
@@ -427,6 +663,8 @@ function refresh() {
       } else {
         renderUpdate(data);
       }
+      // Refresh chart on every cycle
+      loadChartData(currentRange).then(renderTimeline);
       startCountdown();
     })
     .catch(err => {
@@ -435,7 +673,6 @@ function refresh() {
           <div class="state">Не удалось загрузить данные.<br>${err.message}</div>
         `;
       }
-      // On update failure — silently retry next cycle
       startCountdown();
     });
 }
