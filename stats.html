@@ -265,7 +265,8 @@
 </main>
 
 <script>
-const GC = 'https://city-quiz.goatcounter.com';
+const GC    = 'https://city-quiz.goatcounter.com';
+const TOKEN = 'dnvky82gxuv6hhrowg1n01wizw341h2d5u90b14e2szb3c1d';
 
 const CITIES = {
   ВЕЛ: { name: 'Велигама',      flag: '🇱🇰' },
@@ -488,19 +489,61 @@ function fmtDay(iso) {
 }
 
 async function loadChartData(range) {
-  const end   = todayISO();
-  const start = range === 'all' ? '2024-01-01' : daysAgoISO(range - 1);
-  const days  = fillDays(start, end);
+  const end       = todayISO();
+  const counterLookback = Math.min(typeof range === 'number' ? range : 90, 90);
+  const counterStart = daysAgoISO(counterLookback - 1);
+  const apiStart  = range === 'all' ? '2020-01-01' : daysAgoISO(range - 1);
+  const chartStart = range === 'all' ? apiStart : apiStart;
 
-  // Fetch open/DATE and done/DATE counters in parallel
-  const openPaths = days.map(d => `open/${d}`);
-  const donePaths = days.map(d => `done/${d}`);
-  const counts = await Promise.all([...openPaths, ...donePaths].map(fetchCounter));
+  const opensByDay = {};
+  const doneByDay  = {};
+
+  // 1. Historical data via GoatCounter API (daily=true)
+  try {
+    const res = await fetch(
+      `${GC}/api/v0/stats/hits?start=${apiStart}&end=${end}&daily=true&limit=300`,
+      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+    );
+    if (res.ok) {
+      const { hits } = await res.json();
+      (hits || []).forEach(h => {
+        const p = h.path;
+        const isOpen = p === '/city-quiz' || p === '/city-quiz/' || p === '/city-quiz/index.html';
+        const isDone  = p.startsWith('result/');
+        if (!isOpen && !isDone) return;
+        (h.stats || []).forEach(s => {
+          if (isOpen) opensByDay[s.day] = (opensByDay[s.day] || 0) + (s.count || 0);
+          if (isDone)  doneByDay[s.day]  = (doneByDay[s.day]  || 0) + (s.count || 0);
+        });
+      });
+    }
+  } catch (e) { console.warn('Chart API:', e); }
+
+  // 2. Per-day counters supplement/override recent data (reliable, works going forward)
+  const recentDays = fillDays(counterStart, end);
+  const counts = await Promise.all([
+    ...recentDays.map(d => `open/${d}`),
+    ...recentDays.map(d => `done/${d}`),
+  ].map(fetchCounter));
+
+  recentDays.forEach((d, i) => {
+    const o = counts[i];
+    const c = counts[recentDays.length + i];
+    if (o > 0) opensByDay[d] = Math.max(opensByDay[d] || 0, o);
+    if (c > 0) doneByDay[d]  = Math.max(doneByDay[d]  || 0, c);
+  });
+
+  // Build final series — skip leading zero-only days for 'all' view
+  let days = fillDays(chartStart, end);
+  if (range === 'all') {
+    const firstNonZero = days.findIndex(d => (opensByDay[d] || 0) + (doneByDay[d] || 0) > 0);
+    if (firstNonZero > 0) days = days.slice(firstNonZero);
+  }
 
   return {
     labels:      days.map(fmtDay),
-    opens:       counts.slice(0, days.length),
-    completions: counts.slice(days.length),
+    opens:       days.map(d => opensByDay[d] || 0),
+    completions: days.map(d => doneByDay[d]  || 0),
   };
 }
 
