@@ -195,8 +195,7 @@
 </main>
 
 <script>
-const TOKEN = 'dnvky82gxuv6hhrowg1n01wizw341h2d5u90b14e2szb3c1d';
-const API   = 'https://city-quiz.goatcounter.com/api/v0';
+const GC = 'https://city-quiz.goatcounter.com';
 
 const CITIES = {
   ВЕЛ: { name: 'Велигама',      flag: '🇱🇰' },
@@ -217,39 +216,37 @@ const CITIES = {
   ЕГР: { name: 'Слонёнок Егор', flag: '🧸'  },
 };
 
-async function loadStats() {
-  const today = new Date().toISOString().split('T')[0];
-  const url = `${API}/stats/hits?limit=300&start=2020-01-01&end=${today}`;
-
-  const res = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${TOKEN}` }
-  });
-
-  if (!res.ok) throw new Error(`API error ${res.status}`);
-  const data = await res.json();
-  return data.hits || [];
+async function fetchCount(path) {
+  const encoded = path.split('/').map(encodeURIComponent).join('/');
+  try {
+    const res = await fetch(`${GC}/counter/${encoded}.json`);
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return data.count || 0;
+  } catch {
+    return 0;
+  }
 }
 
-function render(hits) {
-  const main = document.getElementById('main');
+async function loadStats() {
+  const cityKeys = Object.keys(CITIES);
+  const paths = ['quiz_start', ...cityKeys.map(k => `result/${k}`)];
+  const counts = await Promise.all(paths.map(fetchCount));
 
-  // Count events
-  let starts = 0;
+  const starts = counts[0];
   const results = {};
-
-  hits.forEach(h => {
-    if (h.path === 'quiz_start') {
-      starts = h.count;
-    } else if (h.path.startsWith('result/')) {
-      const code = h.path.replace('result/', '');
-      results[code] = (results[code] || 0) + h.count;
-    }
+  cityKeys.forEach((key, i) => {
+    if (counts[i + 1] > 0) results[key] = counts[i + 1];
   });
+  return { starts, results };
+}
+
+function render({ starts, results }) {
+  const main = document.getElementById('main');
 
   const completions = Object.values(results).reduce((a, b) => a + b, 0);
   const rate = starts > 0 ? Math.round((completions / starts) * 100) : 0;
 
-  // Sort cities by count
   const sorted = Object.entries(results)
     .sort((a, b) => b[1] - a[1]);
 
