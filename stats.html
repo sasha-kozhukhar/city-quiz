@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -303,7 +304,7 @@ function render({ starts, results }) {
 }
 
 loadStats()
-  .then(render)
+  .then(data => { render(data); if (window.twemoji) twemoji.parse(document.body, { folder: 'svg', ext: '.svg' }); })
   .catch(err => {
     document.getElementById('main').innerHTML = `
       <div class="state">Не удалось загрузить данные.<br>${err.message}</div>

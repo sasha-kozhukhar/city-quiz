@@ -193,6 +193,12 @@ function showScreen(from, to) {
 
 // ─── Quiz logic ───────────────────────────────────────
 
+function applyEmoji(el) {
+  if (window.twemoji) {
+    twemoji.parse(el || document.body, { folder: 'svg', ext: '.svg' });
+  }
+}
+
 function track(path, title) {
   if (window.goatcounter && window.goatcounter.count) {
     window.goatcounter.count({ path, title, event: true });
@@ -206,6 +212,9 @@ function startQuiz() {
   showScreen(screenIntro, screenQuiz);
   renderQuestion();
 }
+
+// Apply emoji after intro renders
+document.addEventListener('DOMContentLoaded', () => applyEmoji(document.body));
 
 function renderQuestion() {
   const q = QUESTIONS[currentQuestion];
@@ -223,6 +232,7 @@ function renderQuestion() {
     btn.addEventListener('click', () => selectOption(opt.scores, btn));
     optionsList.appendChild(btn);
   });
+  applyEmoji(optionsList);
 }
 
 function selectOption(optionScores, btn) {
@@ -280,6 +290,7 @@ function showResult() {
   track('result/' + winner, 'Result: ' + city.name);
 
   showScreen(screenQuiz, screenResult);
+  applyEmoji(screenResult);
 }
 
 function getWinner() {
