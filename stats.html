@@ -266,19 +266,25 @@ async function loadStats() {
   const cityKeys = Object.keys(CITIES);
 
   // All counters in one parallel batch — no auth headers, no CORS preflight
+  // Try both with and without leading slash for page views (GoatCounter path normalisation varies)
   const paths = [
     '/city-quiz',
     '/city-quiz/',
     '/city-quiz/index.html',
+    'city-quiz',
+    'city-quiz/index.html',
     'quiz_start',
     ...cityKeys.map(k => `result/${k}`)
   ];
   const counts = await Promise.all(paths.map(fetchCounter));
 
-  const opened = counts[0] + counts[1] + counts[2];
-  const starts  = counts[3];
+  const opened = Math.max(
+    counts[0] + counts[1] + counts[2],   // with leading slash
+    counts[3] + counts[4]                  // without leading slash
+  );
+  const starts  = counts[5];
   const results = {};
-  cityKeys.forEach((key, i) => { if (counts[4 + i] > 0) results[key] = counts[4 + i]; });
+  cityKeys.forEach((key, i) => { if (counts[6 + i] > 0) results[key] = counts[6 + i]; });
 
   return { opened, starts, results };
 }
