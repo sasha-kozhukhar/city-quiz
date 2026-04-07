@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Статистика — Какой ты город?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8f7f4;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e8e6e1;
+      background: #fff;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    header a {
+      font-size: 14px;
+      color: #c4621a;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    header a:hover { text-decoration: underline; }
+
+    .frame-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+      min-height: calc(100vh - 73px);
+    }
+
+    .fallback {
+      display: none;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    .fallback p {
+      color: #6b6b6b;
+      font-size: 15px;
+    }
+
+    .fallback a {
+      display: inline-block;
+      background: #c4621a;
+      color: #fff;
+      border-radius: 50px;
+      padding: 14px 32px;
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🗺️ Статистика квиза</h1>
+    <a href="index.html">← Квиз</a>
+  </header>
+
+  <div class="frame-wrap">
+    <iframe
+      id="gc-frame"
+      src="https://city-quiz.goatcounter.com"
+      title="GoatCounter stats"
+      onload="handleLoad()"
+      onerror="handleError()"
+    ></iframe>
+
+    <div class="fallback" id="fallback">
+      <p>Не удалось загрузить статистику в iframe.<br>Открой дашборд напрямую:</p>
+      <a href="https://city-quiz.goatcounter.com" target="_blank" rel="noopener">Открыть статистику</a>
+    </div>
+  </div>
+
+  <script>
+    function handleError() {
+      document.getElementById('gc-frame').style.display = 'none';
+      document.getElementById('fallback').style.display = 'flex';
+    }
+
+    // If iframe loads but shows an error page (e.g. X-Frame-Options), show fallback
+    document.getElementById('gc-frame').addEventListener('load', function () {
+      try {
+        // If cross-origin restriction applies, accessing contentDocument throws
+        const doc = this.contentDocument;
+        if (!doc || doc.title === '' || doc.body.innerHTML === '') {
+          handleError();
+        }
+      } catch (e) {
+        handleError();
+      }
+    });
+  </script>
+</body>
+</html>
