@@ -62,7 +62,7 @@
 
     .summary {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 40px;
     }
@@ -179,11 +179,10 @@
       display: inline;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
       header { padding: 16px; }
       main { padding: 24px 16px 0; }
       .summary { grid-template-columns: 1fr 1fr; }
-      .summary-card:last-child { grid-column: 1 / -1; }
       .chart-row { grid-template-columns: 130px 1fr 36px; padding: 8px 14px; }
     }
   </style>
@@ -203,7 +202,8 @@
 </main>
 
 <script>
-const GC = 'https://city-quiz.goatcounter.com';
+const GC    = 'https://city-quiz.goatcounter.com';
+const TOKEN = 'dnvky82gxuv6hhrowg1n01wizw341h2d5u90b14e2szb3c1d';
 
 const CITIES = {
   ВЕЛ: { name: 'Велигама',      flag: '🇱🇰' },
@@ -224,37 +224,65 @@ const CITIES = {
   ЕГР: { name: 'Слонёнок Егор', flag: '🧸'  },
 };
 
-async function fetchCount(path) {
-  const encoded = path.split('/').map(encodeURIComponent).join('/');
+// ── API (accurate total hits) ──────────────────────────
+async function loadFromAPI() {
+  const today = new Date().toISOString().split('T')[0];
+  const res = await fetch(
+    `${GC}/api/v0/stats/hits?start=2020-01-01&end=${today}&limit=200`,
+    { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+  );
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const { hits } = await res.json();
+  if (!hits || hits.length === 0) throw new Error('empty');
+
+  let opened = 0, starts = 0;
+  const results = {};
+  hits.forEach(h => {
+    if (h.path === '/city-quiz' || h.path === '/city-quiz/index.html') opened += h.count;
+    else if (h.path === 'quiz_start') starts = h.count;
+    else if (h.path.startsWith('result/')) results[h.path.replace('result/', '')] = h.count;
+  });
+  return { opened, starts, results };
+}
+
+// ── Counter endpoint fallback (session-deduplicated) ───
+async function fetchCounter(path) {
+  const encoded = path.startsWith('/')
+    ? encodeURIComponent(path)
+    : path.split('/').map(encodeURIComponent).join('/');
   try {
     const res = await fetch(`${GC}/counter/${encoded}.json`);
     if (!res.ok) return 0;
-    const data = await res.json();
-    return parseInt(data.count, 10) || 0;
-  } catch {
-    return 0;
-  }
+    return parseInt((await res.json()).count, 10) || 0;
+  } catch { return 0; }
+}
+
+async function loadFromCounter() {
+  const cityKeys = Object.keys(CITIES);
+  const paths = ['/city-quiz', '/city-quiz/index.html', 'quiz_start',
+                 ...cityKeys.map(k => `result/${k}`)];
+  const counts = await Promise.all(paths.map(fetchCounter));
+  const opened = counts[0] + counts[1];
+  const starts = counts[2];
+  const results = {};
+  cityKeys.forEach((key, i) => { if (counts[i + 3] > 0) results[key] = counts[i + 3]; });
+  return { opened, starts, results };
 }
 
 async function loadStats() {
-  const cityKeys = Object.keys(CITIES);
-  const paths = ['quiz_start', ...cityKeys.map(k => `result/${k}`)];
-  const counts = await Promise.all(paths.map(fetchCount));
-
-  const starts = counts[0];
-  const results = {};
-  cityKeys.forEach((key, i) => {
-    if (counts[i + 1] > 0) results[key] = counts[i + 1];
-  });
-  return { starts, results };
+  try {
+    return await loadFromAPI();
+  } catch (e) {
+    console.warn('API unavailable, using counter endpoint:', e.message);
+    return await loadFromCounter();
+  }
 }
 
-function render({ starts, results }) {
+function render({ opened, starts, results }) {
   const main = document.getElementById('main');
 
   const completions = Object.values(results).reduce((a, b) => a + b, 0);
-  const base = Math.max(starts, completions);
-  const rate = base > 0 ? Math.min(100, Math.round((completions / base) * 100)) : 0;
+  const rate = starts > 0 ? Math.min(100, Math.round((completions / starts) * 100)) : 0;
 
   const sorted = Object.entries(results)
     .sort((a, b) => b[1] - a[1]);
@@ -265,7 +293,11 @@ function render({ starts, results }) {
   main.innerHTML = `
     <div class="summary">
       <div class="summary-card">
-        <div class="summary-label">Запустили квиз</div>
+        <div class="summary-label">Открыли квиз</div>
+        <div class="summary-value">${opened}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Нажали «Начать»</div>
         <div class="summary-value">${starts}</div>
       </div>
       <div class="summary-card">
