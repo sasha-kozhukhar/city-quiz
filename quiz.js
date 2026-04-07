@@ -254,14 +254,20 @@ function showResult() {
   const winner = getWinner();
   const city = CITIES[winner];
 
-  resultImg.src = city.image;
-  resultImg.alt = city.name;
+  // Reset orientation class from previous result
+  screenResult.classList.remove('portrait-layout');
 
-  // Show placeholder with flag until image loads (or if it fails)
   resultPlaceholder.textContent = city.flag;
+  resultPlaceholder.style.display = 'flex';
   resultImg.style.display = 'block';
+  resultImg.alt = city.name;
+  resultImg.src = city.image;
+
   resultImg.onload = () => {
     resultPlaceholder.style.display = 'none';
+    if (resultImg.naturalHeight > resultImg.naturalWidth) {
+      screenResult.classList.add('portrait-layout');
+    }
   };
   resultImg.onerror = () => {
     resultImg.style.display = 'none';

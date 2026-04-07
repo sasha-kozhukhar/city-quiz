@@ -219,7 +219,7 @@ h1 {
   min-width: 18px;
 }
 
-/* ─── Result ──────────────────────────────────────── */
+/* ─── Result — landscape (default) ───────────────── */
 
 #screen-result {
   flex-direction: column;
@@ -228,7 +228,7 @@ h1 {
 .result-image-wrap {
   position: relative;
   width: 100%;
-  height: clamp(220px, 40vw, 380px);
+  height: clamp(220px, 38vw, 340px);
   background: var(--accent-light);
   overflow: hidden;
   flex-shrink: 0;
@@ -238,6 +238,7 @@ h1 {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -273,6 +274,60 @@ h1 {
   font-size: 17px;
   line-height: 1.7;
   color: var(--text);
+}
+
+/* ─── Result — portrait layout ────────────────────── */
+
+#screen-result.portrait-layout {
+  flex-direction: row;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+#screen-result.portrait-layout .result-image-wrap {
+  width: 42%;
+  height: auto;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+#screen-result.portrait-layout #result-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+#screen-result.portrait-layout .result-body {
+  flex: 1;
+  max-width: none;
+  padding: 48px 40px 60px;
+  margin: 0;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  #screen-result.portrait-layout {
+    flex-direction: column;
+    min-height: unset;
+  }
+
+  #screen-result.portrait-layout .result-image-wrap {
+    width: 100%;
+    height: clamp(200px, 55vw, 320px);
+    align-self: auto;
+  }
+
+  #screen-result.portrait-layout #result-img {
+    position: relative;
+    inset: unset;
+  }
+
+  #screen-result.portrait-layout .result-body {
+    padding: 24px 16px 48px;
+  }
 }
 
 /* ─── Transition ──────────────────────────────────── */
