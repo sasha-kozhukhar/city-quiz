@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>О проекте — Какой ты город?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f7f4;
+      --card: #fff;
+      --accent: #c4621a;
+      --accent-light: #f5e8de;
+      --border: #e8e6e1;
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+
+    header {
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 { font-size: 18px; font-weight: 600; }
+
+    header a {
+      font-size: 14px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    header a:hover { text-decoration: underline; }
+
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 52px 24px 0;
+    }
+
+    .hero {
+      margin-bottom: 52px;
+    }
+
+    .hero-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .hero h2 {
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+    }
+
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      background: var(--accent-light);
+      padding: 8px 14px;
+      border-radius: 20px;
+      transition: opacity 0.15s;
+    }
+    .hero-link:hover { opacity: 0.8; }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .card p {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    .card p + p {
+      margin-top: 12px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 600;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-value.accent { color: var(--accent); }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .done-list {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .done-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .done-item:last-child { border-bottom: none; }
+
+    .done-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .done-text strong {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .done-text span {
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: var(--accent-light);
+      color: var(--accent);
+      margin-top: 6px;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 16px; }
+      main { padding: 32px 16px 0; }
+      .hero h2 { font-size: 24px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stats-row .stat-card:last-child { grid-column: span 2; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🗺️ О проекте</h1>
+  <a href="index.html">← Квиз</a>
+</header>
+
+<main>
+
+  <div class="hero">
+    <div class="hero-label">Тестовое задание · Product Owner, BUSY</div>
+    <h2>Какой ты город?</h2>
+    <a class="hero-link" href="index.html" target="_blank">
+      sasha-kozhukhar.github.io/city-quiz ↗
+    </a>
+  </div>
+
+  <!-- 1. Что сделано -->
+  <div class="section">
+    <div class="section-label">Что сделано</div>
+    <div class="card">
+      <p>Онлайн-тест на определение «типа личности» в формате города. 11 вопросов, 16 возможных результатов — каждый с описанием характера через образ места: Лондон, Бишкек, Велигама, Слонёнок Егор.</p>
+      <p>Квиз работает полностью на клиенте, без бэкенда. Встроена аналитика на GoatCounter: считается количество открытий, результаты по городам, конверсия и ежедневная активность. Страница статистики обновляется в реальном времени.</p>
+    </div>
+  </div>
+
+  <!-- 2. Почему это -->
+  <div class="section">
+    <div class="section-label">Почему именно это</div>
+    <div class="card">
+      <p>У меня есть Telegram-канал про путешествия с прогретой аудиторией. Тема городов — естественная для этих людей, они думают категориями «где жить», «куда ехать», «на какой город я похож».</p>
+      <p>Я выбрала формат личностного типирования: люди делятся им охотнее, чем любым другим контентом — он про них, а не про автора. Вторник вечером — классическое окно для прокрастинации и потребления лёгкого контента.</p>
+    </div>
+  </div>
+
+  <!-- 3. Почему думала, что зайдёт -->
+  <div class="section">
+    <div class="section-label">Почему думала, что зайдёт</div>
+    <div class="card">
+      <p>Три механики, заложенные намеренно:</p>
+      <p><strong>Формат типирования.</strong> Люди перепроходят тесты на личность снова и снова — каждый хочет получить «правильный» результат и показать его другим. Высокая вероятность и шеринга, и повторных заходов.</p>
+      <p><strong>Города — не абстракция.</strong> У каждого человека есть мнение про города, где он был или хочет побывать. Результат легко обсуждать.</p>
+      <p><strong>Пасхалка.</strong> Один из результатов — Слонёнок Егор: плюшевый слон, не существующий как город. Он создан специально, чтобы человек либо пересдал квиз, либо отправил скриншот друзьям. Обе реакции увеличивают метрики.</p>
+    </div>
+  </div>
+
+  <!-- 4. Что сделала лично -->
+  <div class="section">
+    <div class="section-label">Что сделала лично</div>
+    <div class="done-list">
+      <div class="done-item">
+        <div class="done-icon">💡</div>
+        <div class="done-text">
+          <strong>Концепция и механика</strong>
+          <span>Выбор формата, логика скоринга, набор из 16 городов — со смыслом и балансом</span>
+        </div>
+      </div>
+      <div class="done-item">
+        <div class="done-icon">✍️</div>
+        <div class="done-text">
+          <strong>Весь контент</strong>
+          <span>11 вопросов, варианты ответов, описания всех 16 городов — написаны от руки</span>
+        </div>
+      </div>
+      <div class="done-item">
+        <div class="done-icon">🧸</div>
+        <div class="done-text">
+          <strong>Пасхалка</strong>
+          <span>Слонёнок Егор — придуман и встроен как вирусный механизм</span>
+        </div>
+      </div>
+      <div class="done-item">
+        <div class="done-icon">📊</div>
+        <div class="done-text">
+          <strong>Продуктовые решения</strong>
+          <span>Аналитика конверсии, структура трекинга, страница статистики в реальном времени</span>
+        </div>
+      </div>
+      <div class="done-item">
+        <div class="done-icon">🚀</div>
+        <div class="done-text">
+          <strong>Запуск</strong>
+          <span>Выбор времени публикации, канал как точка входа для первой волны</span>
+        </div>
+      </div>
+      <div class="done-item">
+        <div class="done-icon">🤖</div>
+        <div class="done-text">
+          <strong>Техническая реализация — с Claude Code</strong>
+          <span>Вёрстка, логика квиза, интеграция аналитики, SVG-график — собрано через AI-инструменты под моим управлением</span>
+          <div class="tag">осознанное использование инструментов</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Аналитика -->
+  <div class="section">
+    <div class="section-label">Реакция</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="val-opened">—</div>
+      <div class="stat-label">Открыли квиз</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="val-completions">—</div>
+      <div class="stat-label">Прошли до конца</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value accent" id="val-rate">—</div>
+      <div class="stat-label">Конверсия</div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-bottom:0">
+    <div class="card">
+      <p id="conversion-text">Полная статистика по городам и активности — <a href="stats.html" style="color:var(--accent);text-decoration:none;font-weight:500">на странице статистики →</a></p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const GC = 'https://city-quiz.goatcounter.com';
+
+const CITY_KEYS = ['ВЕЛ','СТА','ТБЛ','БАТ','ЕРВ','МСК','БДВ','БЛГ','БШК','МДР','АГД','БРЛ','ЛДН','КПТ','ВНА','ЕГР'];
+
+async function fetchCounter(path) {
+  const encoded = path.startsWith('/')
+    ? encodeURIComponent(path)
+    : path.split('/').map(encodeURIComponent).join('/');
+  try {
+    const res = await fetch(`${GC}/counter/${encoded}.json`);
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return parseInt(data.count, 10) || 0;
+  } catch { return 0; }
+}
+
+async function loadStats() {
+  const paths = ['/city-quiz', ...CITY_KEYS.map(k => `result/${k}`)];
+  const counts = await Promise.all(paths.map(fetchCounter));
+
+  const opened      = counts[0];
+  const completions = counts.slice(1).reduce((a, b) => a + b, 0);
+  const base        = Math.max(opened, completions, 1);
+  const rate        = Math.round((completions / base) * 100);
+
+  document.getElementById('val-opened').textContent      = opened;
+  document.getElementById('val-completions').textContent = completions;
+  document.getElementById('val-rate').textContent        = rate + '%';
+
+  if (completions > 0) {
+    document.getElementById('conversion-text').innerHTML =
+      `${rate}% конверсия открытие → завершение: квиз не бросали на полпути. Формат работает — люди хотят узнать результат.` +
+      ` <a href="stats.html" style="color:var(--accent);text-decoration:none;font-weight:500">Полная статистика →</a>`;
+  }
+}
+
+loadStats();
+</script>
+
+</body>
+</html>

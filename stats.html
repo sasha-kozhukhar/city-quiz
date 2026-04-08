@@ -511,7 +511,8 @@ async function loadChartData(range) {
       let found = false;
       (hits || []).forEach(h => {
         const p = h.path;
-        const isOpen = p === '/city-quiz' || p === '/city-quiz/' || p === '/city-quiz/index.html';
+        const isOpen = p === '/city-quiz' || p === '/city-quiz/' || p === '/city-quiz/index.html'
+                    || p === 'quiz_start' || p === '/quiz_start';
         const isDone  = p.startsWith('result/');
         if (!isOpen && !isDone) return;
         found = true;
