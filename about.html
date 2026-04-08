@@ -200,6 +200,32 @@
       margin-top: 6px;
     }
 
+    /* ── Links ── */
+
+    /* Inline text links inside cards */
+    .card a {
+      color: var(--accent);
+      font-weight: 500;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(196, 98, 26, 0.35);
+      transition: text-decoration-color 0.15s;
+    }
+    .card a:hover {
+      text-decoration-color: var(--accent);
+    }
+
+    /* Title links in the links list */
+    .done-text strong a {
+      color: var(--text);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .done-text strong a:hover {
+      color: var(--accent);
+    }
+
     @media (max-width: 600px) {
       header { padding: 16px; }
       main { padding: 32px 16px 0; }
@@ -324,11 +350,11 @@
       <p>Квиз запущен одновременно на двух аудиториях с разной температурой — чтобы сравнить поведение.</p>
       <p style="margin-top:16px"><strong>7 апреля — прогретая аудитория.</strong> Публикация в Telegram-канале про путешествия, 91 подписчик до старта. Люди знакомы с автором, тема органична для канала.</p>
       <p style="margin-top:8px">
-        <a href="https://t.me/gdeetomy/4854" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:500;font-size:13px">Пост в Telegram ↗</a>
+        <a href="https://t.me/gdeetomy/4854" target="_blank" style="font-size:13px">Пост в Telegram ↗</a>
       </p>
       <p style="margin-top:16px"><strong>8 апреля — холодная аудитория.</strong> Публикация в LinkedIn без предварительного контекста. Нет знакомства с автором, нет темы-подводки.</p>
       <p style="margin-top:8px">
-        <a href="https://www.linkedin.com/posts/alexandra-kozhukhar_%D0%B3%D0%B4%D0%B5-%D1%8D%D1%82%D0%BE-%D0%BC%D1%8B-%D1%8E%D0%B0%D1%80-activity-7447603938905788416-Wsxs" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:500;font-size:13px">Пост в LinkedIn ↗</a>
+        <a href="https://www.linkedin.com/posts/alexandra-kozhukhar_%D0%B3%D0%B4%D0%B5-%D1%8D%D1%82%D0%BE-%D0%BC%D1%8B-%D1%8E%D0%B0%D1%80-activity-7447603938905788416-Wsxs" target="_blank" style="font-size:13px">Пост в LinkedIn ↗</a>
       </p>
       <p style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)"><strong>Первичная метрика</strong> — открытия и конверсия в прохождение</p><p><strong>Вторичная метрика</strong> — новые подписчики канала.</p>
     </div>
@@ -356,7 +382,7 @@
 
   <div class="section">
     <div class="card">
-      <p id="conversion-text">Полная статистика по городам и активности — <a href="stats.html" style="color:var(--accent);text-decoration:none;font-weight:500">на странице статистики →</a></p>
+      <p id="conversion-text">Полная статистика по городам и активности — <a href="stats.html">на странице статистики →</a></p>
     </div>
   </div>
 
@@ -388,35 +414,35 @@
       <div class="done-item">
         <div class="done-icon">🗺️</div>
         <div class="done-text">
-          <strong><a href="https://sasha-kozhukhar.github.io/city-quiz/" target="_blank" style="color:var(--text);text-decoration:none">Квиз</a></strong>
+          <strong><a href="https://sasha-kozhukhar.github.io/city-quiz/" target="_blank">Квиз</a></strong>
           <span>sasha-kozhukhar.github.io/city-quiz</span>
         </div>
       </div>
       <div class="done-item">
         <div class="done-icon">🖼️</div>
         <div class="done-text">
-          <strong><a href="https://sasha-kozhukhar.github.io/city-quiz/preview.html" target="_blank" style="color:var(--text);text-decoration:none">Превью результатов</a></strong>
+          <strong><a href="https://sasha-kozhukhar.github.io/city-quiz/preview.html" target="_blank">Превью результатов</a></strong>
           <span>Все 16 результатов без прохождения</span>
         </div>
       </div>
       <div class="done-item">
         <div class="done-icon">📊</div>
         <div class="done-text">
-          <strong><a href="https://sasha-kozhukhar.github.io/city-quiz/stats.html" target="_blank" style="color:var(--text);text-decoration:none">Статистика</a></strong>
+          <strong><a href="https://sasha-kozhukhar.github.io/city-quiz/stats.html" target="_blank">Статистика</a></strong>
           <span>sasha-kozhukhar.github.io/city-quiz/stats</span>
         </div>
       </div>
       <div class="done-item">
         <div class="done-icon">💻</div>
         <div class="done-text">
-          <strong><a href="https://github.com/sasha-kozhukhar/city-quiz" target="_blank" style="color:var(--text);text-decoration:none">Репозиторий</a></strong>
+          <strong><a href="https://github.com/sasha-kozhukhar/city-quiz" target="_blank">Репозиторий</a></strong>
           <span>github.com/sasha-kozhukhar/city-quiz</span>
         </div>
       </div>
       <div class="done-item">
         <div class="done-icon">📈</div>
         <div class="done-text">
-          <strong><a href="https://city-quiz.goatcounter.com/" target="_blank" style="color:var(--text);text-decoration:none">GoatCounter</a></strong>
+          <strong><a href="https://city-quiz.goatcounter.com/" target="_blank">GoatCounter</a></strong>
           <span>city-quiz.goatcounter.com</span>
         </div>
       </div>
