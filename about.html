@@ -510,7 +510,8 @@ async function loadStats() {
   if (completions > 0) {
     document.getElementById('conversion-text').innerHTML =
       `${rate}% конверсия открытие → завершение: квиз не бросали на полпути. Формат работает — люди хотят узнать результат.` +
-      ` <a href="stats.html" style="color:var(--accent);text-decoration:none;font-weight:500">Полная статистика →</a>`;
+      ` <a href="stats.html" style="color:var(--accent);text-decoration:none;font-weight:500">Полная статистика →</a>` +
+      `<br><span style="font-size:0.85em;opacity:0.55;margin-top:6px;display:inline-block">GoatCounter нестабильно фиксирует JS-события нажатия на кнопку, поэтому «открыли» считается как сумма просмотров страницы и зафиксированных нажатий. Метрика немного занижена, но не критично.</span>`;
   }
 }
 
