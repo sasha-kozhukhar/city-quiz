@@ -303,14 +303,15 @@ async function loadStats() {
 
   // All counters in one parallel batch — no auth headers, no CORS preflight
   const paths = [
+    '/city-quiz',
     'quiz_start',
     ...cityKeys.map(k => `result/${k}`)
   ];
   const counts = await Promise.all(paths.map(fetchCounter));
 
-  const opened  = counts[0];
+  const opened  = counts[0] + counts[1]; // page views + start-click events
   const results = {};
-  cityKeys.forEach((key, i) => { if (counts[1 + i] > 0) results[key] = counts[1 + i]; });
+  cityKeys.forEach((key, i) => { if (counts[2 + i] > 0) results[key] = counts[2 + i]; });
 
   return { opened, results };
 }

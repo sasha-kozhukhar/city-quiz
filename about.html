@@ -495,11 +495,11 @@ async function fetchCounter(path) {
 }
 
 async function loadStats() {
-  const paths = ['quiz_start', ...CITY_KEYS.map(k => `result/${k}`)];
+  const paths = ['/city-quiz', 'quiz_start', ...CITY_KEYS.map(k => `result/${k}`)];
   const counts = await Promise.all(paths.map(fetchCounter));
 
-  const opened      = counts[0];
-  const completions = counts.slice(1).reduce((a, b) => a + b, 0);
+  const opened      = counts[0] + counts[1]; // page views + start-click events
+  const completions = counts.slice(2).reduce((a, b) => a + b, 0);
   const base        = Math.max(opened, completions, 1);
   const rate        = Math.round((completions / base) * 100);
 
