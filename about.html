@@ -495,7 +495,7 @@ async function fetchCounter(path) {
 }
 
 async function loadStats() {
-  const paths = ['/city-quiz', ...CITY_KEYS.map(k => `result/${k}`)];
+  const paths = ['quiz_start', ...CITY_KEYS.map(k => `result/${k}`)];
   const counts = await Promise.all(paths.map(fetchCounter));
 
   const opened      = counts[0];

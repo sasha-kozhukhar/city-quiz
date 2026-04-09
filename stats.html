@@ -303,7 +303,7 @@ async function loadStats() {
 
   // All counters in one parallel batch — no auth headers, no CORS preflight
   const paths = [
-    '/city-quiz',
+    'quiz_start',
     ...cityKeys.map(k => `result/${k}`)
   ];
   const counts = await Promise.all(paths.map(fetchCounter));
